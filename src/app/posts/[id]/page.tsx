@@ -1,7 +1,10 @@
 'use client';
 
-import { Container, Typography, Box, Card, CardContent, Button, Divider, CircularProgress } from '@mui/material';
-import { Footer } from '@/components/layout/Footer';
+import { Typography, Box, Card, CardContent, Button, Divider } from '@mui/material';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { BackButton } from '@/components/common/BackButton';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { usePost } from '@/hooks/usePosts';
 import Link from 'next/link';
 import { useMemo } from 'react';
@@ -17,66 +20,29 @@ export default function PostDetailsPage() {
 
   if (isLoading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          flex: 1,
-        }}
-      >
-        <Container maxWidth="lg" sx={{ py: 4, flex: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress />
-          </Box>
-        </Container>
-        <Footer />
-      </Box>
+      <PageLayout>
+        <LoadingSpinner fullHeight />
+      </PageLayout>
     );
   }
 
   if (error || !post) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          flex: 1,
-        }}
-      >
-        <Container maxWidth="lg" sx={{ py: 4, flex: 1 }}>
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h3" component="h1" gutterBottom fontWeight={700}>
-              Post Not Found
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              {error ? 'Failed to load post. Please try again later.' : 'The post you&apos;re looking for doesn&apos;t exist.'}
-            </Typography>
-          </Box>
-          <Link href="/posts" style={{ textDecoration: 'none' }}>
-            <Button variant="contained">Back to Posts</Button>
-          </Link>
-        </Container>
-        <Footer />
-      </Box>
+      <PageLayout>
+        <PageHeader
+          title="Post Not Found"
+          subtitle={error ? 'Failed to load post. Please try again later.' : "The post you're looking for doesn't exist."}
+        />
+        <Link href="/posts" style={{ textDecoration: 'none' }}>
+          <Button variant="contained">Back to Posts</Button>
+        </Link>
+      </PageLayout>
     );
   }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-      }}
-    >
-      <Container maxWidth="lg" sx={{ py: 4, flex: 1 }}>
-        <Box sx={{ mb: 3 }}>
-          <Link href="/posts" style={{ textDecoration: 'none', display: 'inline-block', marginBottom: 16 }}>
-            <Button variant="outlined" size="small">
-              ← Back to Posts
-            </Button>
-          </Link>
-        </Box>
+    <PageLayout>
+      <BackButton href="/posts" label="Back to Posts" />
 
         <Card>
           <CardContent sx={{ p: 4 }}>
@@ -104,9 +70,7 @@ export default function PostDetailsPage() {
             </Box>
           </CardContent>
         </Card>
-      </Container>
-      <Footer />
-    </Box>
+    </PageLayout>
   );
 }
 

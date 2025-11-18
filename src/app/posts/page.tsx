@@ -1,48 +1,22 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Button,
-  IconButton,
-  TextField,
-  InputAdornment,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Pagination,
-  Stack,
-} from '@mui/material';
-import { Visibility, Edit, Delete, Search, Person } from '@mui/icons-material';
-import { Footer } from '@/components/layout/Footer';
+import { Box, IconButton, Typography } from '@mui/material';
+import { Visibility, Edit, Delete } from '@mui/icons-material';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { ErrorDisplay } from '@/components/common/ErrorDisplay';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { SearchInput } from '@/components/common/SearchInput';
+import { Pagination } from '@/components/common/Pagination';
+import { DataTable } from '@/components/data-display/DataTable';
 import { usePosts, useDeletePost } from '@/hooks/usePosts';
 import { Post } from '@/types/post';
 import Link from 'next/link';
 import { useSnackbar } from 'notistack';
-import { CircularProgress } from '@mui/material';
 
 const POSTS_PER_PAGE = 10;
-
-// Generate a consistent color for a user ID
-const getUserColor = (userId: number): string => {
-  // Use a simple hash function to generate consistent colors
-  const hash = userId * 137; // Prime number for better distribution
-  const hue = hash % 360;
-  const saturation = 60 + (hash % 20); // 60-80% saturation
-  const lightness = 50 + (hash % 15); // 50-65% lightness
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-};
 
 export default function PostsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,8 +42,8 @@ export default function PostsPage() {
   }, [searchQuery, posts]);
 
   // Reset to page 1 when search query changes
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
     setPage(1);
   };
 
@@ -81,10 +55,8 @@ export default function PostsPage() {
     return filteredPosts.slice(startIndex, endIndex);
   }, [filteredPosts, page]);
 
-  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
-    setPage(value);
-    // Scroll to top of table when page changes
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
   };
 
   const handleDeleteClick = (post: Post) => {
@@ -110,171 +82,126 @@ export default function PostsPage() {
     setPostToDelete(null);
   };
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-      }}
-    >
-      <Container maxWidth="lg" sx={{ py: 4, flex: 1 }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h3" component="h1" gutterBottom fontWeight={700}>
-            Posts
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Manage and view all your posts
-          </Typography>
-          <TextField
-            fullWidth
-            placeholder="Search posts by title, body, or ID..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ maxWidth: 500 }}
-          />
-        </Box>
+    <PageLayout>
+      <PageHeader
+        title="Posts"
+        subtitle="Manage and view all your posts"
+      />
+      <Box sx={{ mb: 3 }}>
+        <SearchInput
+          value={searchQuery}
+          onChange={handleSearchChange}
+          placeholder="Search posts by title, body, or ID..."
+          maxWidth={500}
+        />
+      </Box>
 
-        {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Box sx={{ py: 4 }}>
-            <Typography variant="body1" color="error">
-              Failed to load posts. Please try again later.
-            </Typography>
-          </Box>
-        ) : (
-          <TableContainer component={Paper} elevation={0} sx={{ border: 1, borderColor: 'divider' }}>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Title</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }} align="right">
-                    Actions
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedPosts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        {filteredPosts.length === 0
-                          ? 'No posts found matching your search.'
-                          : 'No posts on this page.'}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginatedPosts.map((post: Post) => (
-                <TableRow
-                  key={post.id}
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : error ? (
+        <ErrorDisplay
+          message="Failed to load posts. Please try again later."
+          variant="text"
+        />
+      ) : (
+        <DataTable<Post>
+          columns={[
+            {
+              id: 'id',
+              label: 'ID',
+            },
+            {
+              id: 'title',
+              label: 'Title',
+              render: (post) => (
+                <Typography variant="body2" fontWeight={500}>
+                  {post.title}
+                </Typography>
+              ),
+            },
+            {
+              id: 'body',
+              label: 'Body',
+              render: (post) => (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
                   sx={{
-                    '&:hover': {
-                      backgroundColor: 'action.hover',
-                    },
+                    maxWidth: 400,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
                   }}
                 >
-                  <TableCell>{post.id}</TableCell>
-                  <TableCell>
-                    <Person sx={{ fontSize: 20, color: getUserColor(post.userId) }} />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
-                      {post.title}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                      <Link href={`/posts/${post.id}`} style={{ textDecoration: 'none' }}>
-                        <IconButton size="small" color="primary" aria-label="view post">
-                          <Visibility fontSize="small" />
-                        </IconButton>
-                      </Link>
-                      <Link href={`/posts/${post.id}/edit`} style={{ textDecoration: 'none' }}>
-                        <IconButton size="small" color="primary" aria-label="edit post">
-                          <Edit fontSize="small" />
-                        </IconButton>
-                      </Link>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        aria-label="delete post"
-                        onClick={() => handleDeleteClick(post)}
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+                  {post.body}
+                </Typography>
+              ),
+            },
+            {
+              id: 'actions',
+              label: 'Actions',
+              align: 'right',
+              render: (post) => (
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                  <Link href={`/posts/${post.id}`} style={{ textDecoration: 'none' }}>
+                    <IconButton size="small" color="primary" aria-label="view post">
+                      <Visibility fontSize="small" />
+                    </IconButton>
+                  </Link>
+                  <Link href={`/posts/${post.id}/edit`} style={{ textDecoration: 'none' }}>
+                    <IconButton size="small" color="primary" aria-label="edit post">
+                      <Edit fontSize="small" />
+                    </IconButton>
+                  </Link>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    aria-label="delete post"
+                    onClick={() => handleDeleteClick(post)}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </Box>
+              ),
+            },
+          ]}
+          data={paginatedPosts}
+          emptyMessage={
+            filteredPosts.length === 0
+              ? 'No posts found matching your search.'
+              : 'No posts on this page.'
+          }
+          getRowKey={(post) => post.id}
+        />
+      )}
 
-        {/* Pagination */}
-        {!isLoading && !error && filteredPosts.length > 0 && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-            <Stack spacing={2}>
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-                showFirstButton
-                showLastButton
-                size="large"
-              />
-              <Typography variant="body2" color="text.secondary" textAlign="center">
-                Showing {paginatedPosts.length > 0 ? (page - 1) * POSTS_PER_PAGE + 1 : 0} -{' '}
-                {Math.min(page * POSTS_PER_PAGE, filteredPosts.length)} of {filteredPosts.length} posts
-              </Typography>
-            </Stack>
-          </Box>
-        )}
+      {/* Pagination */}
+      {!isLoading && !error && filteredPosts.length > 0 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={filteredPosts.length}
+          itemsPerPage={POSTS_PER_PAGE}
+          onPageChange={handlePageChange}
+          showCount
+          scrollToTop
+        />
+      )}
 
-        <Dialog
-          open={deleteDialogOpen}
-          onClose={handleDeleteCancel}
-          aria-labelledby="delete-dialog-title"
-          aria-describedby="delete-dialog-description"
-        >
-          <DialogTitle id="delete-dialog-title">Delete Post</DialogTitle>
-          <DialogContent>
-            <DialogContentText id="delete-dialog-description">
-              Are you sure you want to delete this post? This action cannot be undone.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDeleteCancel} disabled={deletePostMutation.isPending}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleDeleteConfirm}
-              color="error"
-              variant="contained"
-              autoFocus
-              disabled={deletePostMutation.isPending}
-            >
-              {deletePostMutation.isPending ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Container>
-      <Footer />
-    </Box>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Post"
+        message="Are you sure you want to delete this post? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmColor="error"
+        isLoading={deletePostMutation.isPending}
+      />
+    </PageLayout>
   );
 }
 
