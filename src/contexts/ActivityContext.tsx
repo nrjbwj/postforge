@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface Activity {
   id: string;
@@ -17,36 +17,10 @@ interface ActivityContextType {
 
 const ActivityContext = createContext<ActivityContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'postforge_activities';
 const MAX_ACTIVITIES = 50; // Keep last 50 activities
 
 export function ActivityProvider({ children }: { children: ReactNode }) {
   const [activities, setActivities] = useState<Activity[]>([]);
-
-  // Load activities from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Schedule state update asynchronously to avoid synchronous setState warning
-        queueMicrotask(() => {
-          setActivities(parsed);
-        });
-      }
-    } catch (error) {
-      console.error('Failed to load activities from localStorage', error);
-    }
-  }, []);
-
-  // Save activities to localStorage whenever they change
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(activities));
-    } catch (error) {
-      console.error('Failed to save activities to localStorage', error);
-    }
-  }, [activities]);
 
   const addActivity = (activity: Omit<Activity, 'id' | 'timestamp'>) => {
     const newActivity: Activity = {
