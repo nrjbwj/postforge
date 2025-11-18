@@ -15,7 +15,17 @@ export const QuickActions: React.FC = () => {
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         Get started with common tasks
       </Typography>
-      <Stack direction="row" spacing={2}>
+      <Stack 
+        direction={{ xs: 'column', sm: 'row' }} 
+        spacing={2}
+        sx={{
+          '& .MuiButton-root': {
+            minHeight: '48px',
+            height: '48px',
+            width: { xs: '100%', sm: 'auto' },
+          },
+        }}
+      >
         <Button
           variant="contained"
           startIcon={<Add />}
