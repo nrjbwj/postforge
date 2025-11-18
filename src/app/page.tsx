@@ -104,7 +104,7 @@ export default function Dashboard() {
             <QuickActions />
           </Paper>
           <Paper sx={{ p: 3 }}>
-            <RecentActivity posts={posts} isLoading={isLoading} />
+            <RecentActivity />
           </Paper>
         </Box>
       </Container>

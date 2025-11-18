@@ -4,6 +4,7 @@ import React, { ReactNode, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SnackbarProvider } from 'notistack';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { ActivityProvider } from '@/contexts/ActivityContext';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -26,16 +27,18 @@ export const Providers: React.FC<ProvidersProps> = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <SnackbarProvider
-          maxSnack={3}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          autoHideDuration={3000}
-        >
-          {children}
-        </SnackbarProvider>
+        <ActivityProvider>
+          <SnackbarProvider
+            maxSnack={3}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            autoHideDuration={3000}
+          >
+            {children}
+          </SnackbarProvider>
+        </ActivityProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

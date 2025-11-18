@@ -24,7 +24,7 @@ import {
   Pagination,
   Stack,
 } from '@mui/material';
-import { Visibility, Edit, Delete, Search } from '@mui/icons-material';
+import { Visibility, Edit, Delete, Search, Person } from '@mui/icons-material';
 import { Footer } from '@/components/layout/Footer';
 import { usePosts, useDeletePost } from '@/hooks/usePosts';
 import { Post } from '@/types/post';
@@ -33,6 +33,16 @@ import { useSnackbar } from 'notistack';
 import { CircularProgress } from '@mui/material';
 
 const POSTS_PER_PAGE = 10;
+
+// Generate a consistent color for a user ID
+const getUserColor = (userId: number): string => {
+  // Use a simple hash function to generate consistent colors
+  const hash = userId * 137; // Prime number for better distribution
+  const hue = hash % 360;
+  const saturation = 60 + (hash % 20); // 60-80% saturation
+  const lightness = 50 + (hash % 15); // 50-65% lightness
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
 
 export default function PostsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,7 +99,7 @@ export default function PostsPage() {
         enqueueSnackbar('Post deleted successfully', { variant: 'success' });
         setDeleteDialogOpen(false);
         setPostToDelete(null);
-      } catch (error) {
+      } catch {
         enqueueSnackbar('Failed to delete post', { variant: 'error' });
       }
     }
@@ -147,6 +157,7 @@ export default function PostsPage() {
               <TableHead>
                 <TableRow sx={{ backgroundColor: 'action.hover' }}>
                   <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Title</TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="right">
                     Actions
@@ -156,7 +167,7 @@ export default function PostsPage() {
               <TableBody>
                 {paginatedPosts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
                       <Typography variant="body2" color="text.secondary">
                         {filteredPosts.length === 0
                           ? 'No posts found matching your search.'
@@ -175,6 +186,9 @@ export default function PostsPage() {
                   }}
                 >
                   <TableCell>{post.id}</TableCell>
+                  <TableCell>
+                    <Person sx={{ fontSize: 20, color: getUserColor(post.userId) }} />
+                  </TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={500}>
                       {post.title}

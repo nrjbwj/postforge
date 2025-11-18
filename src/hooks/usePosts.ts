@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchPosts, fetchPost, createPost, updatePost, deletePost, type Post, type CreatePostData, type UpdatePostData } from '@/lib/api/posts';
+import { useActivity } from '@/contexts/ActivityContext';
 
 // Query keys
 export const postKeys = {
@@ -30,14 +31,24 @@ export function usePost(id: number) {
 // Create a new post
 export function useCreatePost() {
   const queryClient = useQueryClient();
+  const { addActivity } = useActivity();
 
   return useMutation({
     mutationFn: (data: CreatePostData) => createPost(data),
     onSuccess: (newPost) => {
-      // Invalidate and refetch posts list
-      queryClient.invalidateQueries({ queryKey: postKeys.lists() });
-      // Optionally add the new post to the cache
+      // Add the new post to the posts list cache directly
+      queryClient.setQueryData<Post[]>(postKeys.lists(), (oldPosts) => {
+        if (!oldPosts) return [newPost];
+        return [newPost, ...oldPosts];
+      });
+      // Add the new post detail to cache
       queryClient.setQueryData(postKeys.detail(newPost.id), newPost);
+      // Track activity
+      addActivity({
+        type: 'create',
+        postId: newPost.id,
+        postTitle: newPost.title,
+      });
     },
   });
 }
@@ -45,6 +56,7 @@ export function useCreatePost() {
 // Update an existing post
 export function useUpdatePost() {
   const queryClient = useQueryClient();
+  const { addActivity } = useActivity();
 
   return useMutation({
     mutationFn: (data: UpdatePostData) => updatePost(data),
@@ -59,6 +71,12 @@ export function useUpdatePost() {
           post.id === updatedPost.id ? updatedPost : post
         );
       });
+      // Track activity
+      addActivity({
+        type: 'edit',
+        postId: updatedPost.id,
+        postTitle: updatedPost.title,
+      });
     },
   });
 }
@@ -66,14 +84,31 @@ export function useUpdatePost() {
 // Delete a post
 export function useDeletePost() {
   const queryClient = useQueryClient();
+  const { addActivity } = useActivity();
 
   return useMutation({
     mutationFn: (id: number) => deletePost(id),
     onSuccess: (_, deletedId) => {
-      // Remove the post from cache
+      // Get the post title before removing from cache
+      const oldPosts = queryClient.getQueryData<Post[]>(postKeys.lists());
+      const deletedPost = oldPosts?.find((post) => post.id === deletedId);
+      
+      // Remove the post from the posts list cache directly
+      queryClient.setQueryData<Post[]>(postKeys.lists(), (oldPosts) => {
+        if (!oldPosts) return oldPosts;
+        return oldPosts.filter((post) => post.id !== deletedId);
+      });
+      // Remove the post detail from cache
       queryClient.removeQueries({ queryKey: postKeys.detail(deletedId) });
-      // Invalidate posts list to refetch
-      queryClient.invalidateQueries({ queryKey: postKeys.lists() });
+      
+      // Track activity
+      if (deletedPost) {
+        addActivity({
+          type: 'delete',
+          postId: deletedId,
+          postTitle: deletedPost.title,
+        });
+      }
     },
   });
 }
