@@ -25,23 +25,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ height: '100%' }}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ margin: 0, padding: 0 }}
+        style={{ margin: 0, padding: 0, minHeight: '100%', display: 'flex', flexDirection: 'column' }}
       >
-        <Providers>
-          <Navigation />
-          <main
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 'calc(100vh - 64px)',
-            }}
-          >
-            {children}
-          </main>
-        </Providers>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', flex: 1 }}>
+          <Providers>
+            <Navigation />
+            <main
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+              }}
+            >
+              {children}
+            </main>
+          </Providers>
+        </div>
       </body>
     </html>
   );

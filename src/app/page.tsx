@@ -13,7 +13,7 @@ export default function Dashboard() {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100vh',
+        flex: 1,
       }}
     >
       <Container maxWidth="lg" sx={{ py: 4, flex: 1 }}>
