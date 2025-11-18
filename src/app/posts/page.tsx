@@ -15,8 +15,7 @@ import { usePosts, useDeletePost } from '@/hooks/usePosts';
 import { Post } from '@/types/post';
 import Link from 'next/link';
 import { useSnackbar } from 'notistack';
-
-const POSTS_PER_PAGE = 10;
+import { env } from '@/config/env';
 
 export default function PostsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,10 +47,10 @@ export default function PostsPage() {
   };
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
+  const totalPages = Math.ceil(filteredPosts.length / env.postsPerPage);
   const paginatedPosts = useMemo(() => {
-    const startIndex = (page - 1) * POSTS_PER_PAGE;
-    const endIndex = startIndex + POSTS_PER_PAGE;
+    const startIndex = (page - 1) * env.postsPerPage;
+    const endIndex = startIndex + env.postsPerPage;
     return filteredPosts.slice(startIndex, endIndex);
   }, [filteredPosts, page]);
 
@@ -183,7 +182,7 @@ export default function PostsPage() {
           page={page}
           totalPages={totalPages}
           totalItems={filteredPosts.length}
-          itemsPerPage={POSTS_PER_PAGE}
+          itemsPerPage={env.postsPerPage}
           onPageChange={handlePageChange}
           showCount
           scrollToTop

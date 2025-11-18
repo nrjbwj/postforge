@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { BackButton } from '@/components/common/BackButton';
 import { PostForm } from '@/components/forms/PostForm';
 import { useCreatePost } from '@/hooks/usePosts';
+import { env } from '@/config/env';
 
 export default function NewPostPage() {
   const createPostMutation = useCreatePost();
@@ -13,7 +14,7 @@ export default function NewPostPage() {
     return await createPostMutation.mutateAsync({
       title: data.title,
       body: data.body,
-      userId: 1, // Using userId 1 for now
+      userId: env.defaultUserId,
     });
   };
 

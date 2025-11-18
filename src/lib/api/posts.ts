@@ -1,4 +1,6 @@
-const API_BASE_URL = 'https://jsonplaceholder.typicode.com';
+import { env } from '@/config/env';
+
+const API_BASE_URL = env.apiBaseUrl;
 
 export interface Post {
   id: number;

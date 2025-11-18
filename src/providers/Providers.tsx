@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SnackbarProvider } from 'notistack';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ActivityProvider } from '@/contexts/ActivityContext';
+import { env } from '@/config/env';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -16,9 +17,9 @@ export const Providers: React.FC<ProvidersProps> = ({ children }) => {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 minute
+            staleTime: env.queryStaleTime,
             refetchOnWindowFocus: false,
-            retry: 1,
+            retry: env.queryRetry,
           },
         },
       })
@@ -29,12 +30,12 @@ export const Providers: React.FC<ProvidersProps> = ({ children }) => {
       <ThemeProvider>
         <ActivityProvider>
           <SnackbarProvider
-            maxSnack={3}
+            maxSnack={env.snackbarMaxSnack}
             anchorOrigin={{
               vertical: 'top',
               horizontal: 'right',
             }}
-            autoHideDuration={3000}
+            autoHideDuration={env.snackbarAutoHideDuration}
           >
             {children}
           </SnackbarProvider>
