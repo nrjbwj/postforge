@@ -13,24 +13,23 @@ import {
   Stack,
 } from '@mui/material';
 import { Footer } from '@/components/layout/Footer';
-import { usePosts } from '@/contexts/PostsContext';
+import { usePost, useUpdatePost } from '@/hooks/usePosts';
 import { useSnackbar } from 'notistack';
 import Link from 'next/link';
+import { CircularProgress } from '@mui/material';
 
 export default function EditPostPage() {
   const params = useParams();
   const router = useRouter();
-  const { getPost, updatePost } = usePosts();
-  const { enqueueSnackbar } = useSnackbar();
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const postId = useMemo(() => {
     const id = params?.id as string;
     return id ? parseInt(id, 10) : 0;
   }, [params?.id]);
-  const post = useMemo(() => getPost(postId), [getPost, postId]);
+  const { data: post, isLoading, error } = usePost(postId);
+  const updatePostMutation = useUpdatePost();
+  const { enqueueSnackbar } = useSnackbar();
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
 
   useEffect(() => {
     if (post) {
@@ -39,7 +38,26 @@ export default function EditPostPage() {
     }
   }, [post]);
 
-  if (!post) {
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+        }}
+      >
+        <Container maxWidth="lg" sx={{ py: 4, flex: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        </Container>
+        <Footer />
+      </Box>
+    );
+  }
+
+  if (error || !post) {
     return (
       <Box
         sx={{
@@ -54,7 +72,7 @@ export default function EditPostPage() {
               Post Not Found
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              The post you&apos;re looking for doesn&apos;t exist.
+              {error ? 'Failed to load post. Please try again later.' : 'The post you&apos;re looking for doesn&apos;t exist.'}
             </Typography>
           </Box>
           <Link href="/posts" style={{ textDecoration: 'none' }}>
@@ -74,19 +92,17 @@ export default function EditPostPage() {
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      const updatedPost = updatePost(postId, title.trim(), body.trim());
-      if (updatedPost) {
-        enqueueSnackbar('Post updated successfully!', { variant: 'success' });
-        router.push(`/posts/${updatedPost.id}`);
-      } else {
-        enqueueSnackbar('Failed to update post', { variant: 'error' });
-      }
+      const updatedPost = await updatePostMutation.mutateAsync({
+        id: postId,
+        title: title.trim(),
+        body: body.trim(),
+        userId: post.userId,
+      });
+      enqueueSnackbar('Post updated successfully!', { variant: 'success' });
+      router.push(`/posts/${updatedPost.id}`);
     } catch {
       enqueueSnackbar('Failed to update post', { variant: 'error' });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -140,12 +156,12 @@ export default function EditPostPage() {
                 />
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Link href={`/posts/${postId}`} style={{ textDecoration: 'none' }}>
-                    <Button variant="outlined" disabled={isSubmitting}>
+                    <Button variant="outlined" disabled={updatePostMutation.isPending}>
                       Cancel
                     </Button>
                   </Link>
-                  <Button type="submit" variant="contained" disabled={isSubmitting}>
-                    {isSubmitting ? 'Updating...' : 'Update Post'}
+                  <Button type="submit" variant="contained" disabled={updatePostMutation.isPending}>
+                    {updatePostMutation.isPending ? 'Updating...' : 'Update Post'}
                   </Button>
                 </Box>
               </Stack>

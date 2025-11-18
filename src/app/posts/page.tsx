@@ -24,16 +24,18 @@ import {
 } from '@mui/material';
 import { Visibility, Edit, Delete, Search } from '@mui/icons-material';
 import { Footer } from '@/components/layout/Footer';
-import { usePosts } from '@/contexts/PostsContext';
+import { usePosts, useDeletePost } from '@/hooks/usePosts';
 import { Post } from '@/types/post';
 import Link from 'next/link';
 import { useSnackbar } from 'notistack';
+import { CircularProgress } from '@mui/material';
 
 export default function PostsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
-  const { posts, deletePost } = usePosts();
+  const { data: posts = [], isLoading, error } = usePosts();
+  const deletePostMutation = useDeletePost();
   const { enqueueSnackbar } = useSnackbar();
 
   const filteredPosts = useMemo(() => {
@@ -55,12 +57,16 @@ export default function PostsPage() {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (postToDelete) {
-      deletePost(postToDelete.id);
-      enqueueSnackbar('Post deleted successfully', { variant: 'success' });
-      setDeleteDialogOpen(false);
-      setPostToDelete(null);
+      try {
+        await deletePostMutation.mutateAsync(postToDelete.id);
+        enqueueSnackbar('Post deleted successfully', { variant: 'success' });
+        setDeleteDialogOpen(false);
+        setPostToDelete(null);
+      } catch (error) {
+        enqueueSnackbar('Failed to delete post', { variant: 'error' });
+      }
     }
   };
 
@@ -100,28 +106,39 @@ export default function PostsPage() {
           />
         </Box>
 
-        <TableContainer component={Paper} elevation={0} sx={{ border: 1, borderColor: 'divider' }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: 'action.hover' }}>
-                <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Title</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
-                  Actions
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredPosts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      No posts found matching your search.
-                    </Typography>
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Box sx={{ py: 4 }}>
+            <Typography variant="body1" color="error">
+              Failed to load posts. Please try again later.
+            </Typography>
+          </Box>
+        ) : (
+          <TableContainer component={Paper} elevation={0} sx={{ border: 1, borderColor: 'divider' }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                  <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Title</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    Actions
                   </TableCell>
                 </TableRow>
-              ) : (
-                filteredPosts.map((post: Post) => (
+              </TableHead>
+              <TableBody>
+                {filteredPosts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center" sx={{ py: 4 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No posts found matching your search.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredPosts.map((post: Post) => (
                 <TableRow
                   key={post.id}
                   sx={{
@@ -159,11 +176,12 @@ export default function PostsPage() {
                     </Box>
                   </TableCell>
                 </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
 
         <Dialog
           open={deleteDialogOpen}
@@ -178,9 +196,17 @@ export default function PostsPage() {
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleDeleteCancel}>Cancel</Button>
-            <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
-              Delete
+            <Button onClick={handleDeleteCancel} disabled={deletePostMutation.isPending}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteConfirm}
+              color="error"
+              variant="contained"
+              autoFocus
+              disabled={deletePostMutation.isPending}
+            >
+              {deletePostMutation.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogActions>
         </Dialog>

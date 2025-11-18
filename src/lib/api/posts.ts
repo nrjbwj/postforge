@@ -43,7 +43,7 @@ export const createPost = async (data: CreatePostData): Promise<Post> => {
   const response = await fetch(`${API_BASE_URL}/posts`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-type': 'application/json; charset=UTF-8',
     },
     body: JSON.stringify(data),
   });
@@ -58,7 +58,7 @@ export const updatePost = async (data: UpdatePostData): Promise<Post> => {
   const response = await fetch(`${API_BASE_URL}/posts/${data.id}`, {
     method: 'PUT',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-type': 'application/json; charset=UTF-8',
     },
     body: JSON.stringify({
       id: data.id,

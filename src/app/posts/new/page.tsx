@@ -13,17 +13,16 @@ import {
   Stack,
 } from '@mui/material';
 import { Footer } from '@/components/layout/Footer';
-import { usePosts } from '@/contexts/PostsContext';
+import { useCreatePost } from '@/hooks/usePosts';
 import { useSnackbar } from 'notistack';
 import Link from 'next/link';
 
 export default function NewPostPage() {
   const router = useRouter();
-  const { createPost } = usePosts();
+  const createPostMutation = useCreatePost();
   const { enqueueSnackbar } = useSnackbar();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,15 +32,16 @@ export default function NewPostPage() {
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      const newPost = createPost(title.trim(), body.trim(), 1); // Using userId 1 for now
+      const newPost = await createPostMutation.mutateAsync({
+        title: title.trim(),
+        body: body.trim(),
+        userId: 1, // Using userId 1 for now
+      });
       enqueueSnackbar('Post created successfully!', { variant: 'success' });
       router.push(`/posts/${newPost.id}`);
     } catch (error) {
       enqueueSnackbar('Failed to create post', { variant: 'error' });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -95,12 +95,12 @@ export default function NewPostPage() {
                 />
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Link href="/posts" style={{ textDecoration: 'none' }}>
-                    <Button variant="outlined" disabled={isSubmitting}>
+                    <Button variant="outlined" disabled={createPostMutation.isPending}>
                       Cancel
                     </Button>
                   </Link>
-                  <Button type="submit" variant="contained" disabled={isSubmitting}>
-                    {isSubmitting ? 'Creating...' : 'Create Post'}
+                  <Button type="submit" variant="contained" disabled={createPostMutation.isPending}>
+                    {createPostMutation.isPending ? 'Creating...' : 'Create Post'}
                   </Button>
                 </Box>
               </Stack>

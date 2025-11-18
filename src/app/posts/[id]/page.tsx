@@ -1,22 +1,40 @@
 'use client';
 
-import { Container, Typography, Box, Card, CardContent, Button, Divider } from '@mui/material';
+import { Container, Typography, Box, Card, CardContent, Button, Divider, CircularProgress } from '@mui/material';
 import { Footer } from '@/components/layout/Footer';
-import { usePosts } from '@/contexts/PostsContext';
+import { usePost } from '@/hooks/usePosts';
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { useParams } from 'next/navigation';
 
 export default function PostDetailsPage() {
   const params = useParams();
-  const { getPost } = usePosts();
   const postId = useMemo(() => {
     const id = params?.id as string;
     return id ? parseInt(id, 10) : 0;
   }, [params?.id]);
-  const post = useMemo(() => getPost(postId), [getPost, postId]);
+  const { data: post, isLoading, error } = usePost(postId);
 
-  if (!post) {
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+        }}
+      >
+        <Container maxWidth="lg" sx={{ py: 4, flex: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        </Container>
+        <Footer />
+      </Box>
+    );
+  }
+
+  if (error || !post) {
     return (
       <Box
         sx={{
@@ -31,7 +49,7 @@ export default function PostDetailsPage() {
               Post Not Found
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              The post you&apos;re looking for doesn&apos;t exist.
+              {error ? 'Failed to load post. Please try again later.' : 'The post you&apos;re looking for doesn&apos;t exist.'}
             </Typography>
           </Box>
           <Link href="/posts" style={{ textDecoration: 'none' }}>
