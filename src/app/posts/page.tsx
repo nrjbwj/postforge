@@ -16,29 +16,58 @@ import {
   IconButton,
   TextField,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import { Visibility, Edit, Delete, Search } from '@mui/icons-material';
 import { Footer } from '@/components/layout/Footer';
-import { mockPosts } from '@/data/mockPosts';
+import { usePosts } from '@/contexts/PostsContext';
 import { Post } from '@/types/post';
 import Link from 'next/link';
+import { useSnackbar } from 'notistack';
 
 export default function PostsPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<Post | null>(null);
+  const { posts, deletePost } = usePosts();
+  const { enqueueSnackbar } = useSnackbar();
 
   const filteredPosts = useMemo(() => {
     if (!searchQuery.trim()) {
-      return mockPosts;
+      return posts;
     }
 
     const query = searchQuery.toLowerCase().trim();
-    return mockPosts.filter(
+    return posts.filter(
       (post) =>
         post.title.toLowerCase().includes(query) ||
         post.body.toLowerCase().includes(query) ||
         post.id.toString().includes(query)
     );
-  }, [searchQuery]);
+  }, [searchQuery, posts]);
+
+  const handleDeleteClick = (post: Post) => {
+    setPostToDelete(post);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (postToDelete) {
+      deletePost(postToDelete.id);
+      enqueueSnackbar('Post deleted successfully', { variant: 'success' });
+      setDeleteDialogOpen(false);
+      setPostToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setPostToDelete(null);
+  };
   return (
     <Box
       sx={{
@@ -123,10 +152,7 @@ export default function PostsPage() {
                         size="small"
                         color="error"
                         aria-label="delete post"
-                        onClick={() => {
-                          // Delete functionality will be implemented later
-                          console.log('Delete post:', post.id);
-                        }}
+                        onClick={() => handleDeleteClick(post)}
                       >
                         <Delete fontSize="small" />
                       </IconButton>
@@ -138,6 +164,26 @@ export default function PostsPage() {
             </TableBody>
           </Table>
         </TableContainer>
+
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={handleDeleteCancel}
+          aria-labelledby="delete-dialog-title"
+          aria-describedby="delete-dialog-description"
+        >
+          <DialogTitle id="delete-dialog-title">Delete Post</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="delete-dialog-description">
+              Are you sure you want to delete this post? This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDeleteCancel}>Cancel</Button>
+            <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
       <Footer />
     </Box>

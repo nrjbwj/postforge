@@ -2,15 +2,19 @@
 
 import { Container, Typography, Box, Card, CardContent, Button, Divider } from '@mui/material';
 import { Footer } from '@/components/layout/Footer';
-import { mockPosts } from '@/data/mockPosts';
+import { usePosts } from '@/contexts/PostsContext';
 import Link from 'next/link';
 import { useMemo } from 'react';
+import { useParams } from 'next/navigation';
 
-export default function PostDetailsPage({ params }: { params: { id: string } }) {
-  const post = useMemo(() => {
-    const postId = parseInt(params.id, 10);
-    return mockPosts.find((p) => p.id === postId);
-  }, [params.id]);
+export default function PostDetailsPage() {
+  const params = useParams();
+  const { getPost } = usePosts();
+  const postId = useMemo(() => {
+    const id = params?.id as string;
+    return id ? parseInt(id, 10) : 0;
+  }, [params?.id]);
+  const post = useMemo(() => getPost(postId), [getPost, postId]);
 
   if (!post) {
     return (
@@ -27,7 +31,7 @@ export default function PostDetailsPage({ params }: { params: { id: string } }) 
               Post Not Found
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              The post you're looking for doesn't exist.
+              The post you&apos;re looking for doesn&apos;t exist.
             </Typography>
           </Box>
           <Link href="/posts" style={{ textDecoration: 'none' }}>
