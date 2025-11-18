@@ -21,6 +21,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Pagination,
+  Stack,
 } from '@mui/material';
 import { Visibility, Edit, Delete, Search } from '@mui/icons-material';
 import { Footer } from '@/components/layout/Footer';
@@ -30,8 +32,11 @@ import Link from 'next/link';
 import { useSnackbar } from 'notistack';
 import { CircularProgress } from '@mui/material';
 
+const POSTS_PER_PAGE = 10;
+
 export default function PostsPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const { data: posts = [], isLoading, error } = usePosts();
@@ -51,6 +56,26 @@ export default function PostsPage() {
         post.id.toString().includes(query)
     );
   }, [searchQuery, posts]);
+
+  // Reset to page 1 when search query changes
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
+  const paginatedPosts = useMemo(() => {
+    const startIndex = (page - 1) * POSTS_PER_PAGE;
+    const endIndex = startIndex + POSTS_PER_PAGE;
+    return filteredPosts.slice(startIndex, endIndex);
+  }, [filteredPosts, page]);
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+    // Scroll to top of table when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleDeleteClick = (post: Post) => {
     setPostToDelete(post);
@@ -94,7 +119,7 @@ export default function PostsPage() {
             fullWidth
             placeholder="Search posts by title, body, or ID..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -129,16 +154,18 @@ export default function PostsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredPosts.length === 0 ? (
+                {paginatedPosts.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} align="center" sx={{ py: 4 }}>
                       <Typography variant="body2" color="text.secondary">
-                        No posts found matching your search.
+                        {filteredPosts.length === 0
+                          ? 'No posts found matching your search.'
+                          : 'No posts on this page.'}
                       </Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPosts.map((post: Post) => (
+                  paginatedPosts.map((post: Post) => (
                 <TableRow
                   key={post.id}
                   sx={{
@@ -181,6 +208,27 @@ export default function PostsPage() {
               </TableBody>
             </Table>
           </TableContainer>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && !error && filteredPosts.length > 0 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Stack spacing={2}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                showFirstButton
+                showLastButton
+                size="large"
+              />
+              <Typography variant="body2" color="text.secondary" textAlign="center">
+                Showing {paginatedPosts.length > 0 ? (page - 1) * POSTS_PER_PAGE + 1 : 0} -{' '}
+                {Math.min(page * POSTS_PER_PAGE, filteredPosts.length)} of {filteredPosts.length} posts
+              </Typography>
+            </Stack>
+          </Box>
         )}
 
         <Dialog
