@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-https://jsonplaceholder.typicode.com}
+        - NEXT_PUBLIC_DEFAULT_THEME=${NEXT_PUBLIC_DEFAULT_THEME:-light}
+        - NEXT_PUBLIC_POSTS_PER_PAGE=${NEXT_PUBLIC_POSTS_PER_PAGE:-10}
+        - NEXT_PUBLIC_QUERY_STALE_TIME=${NEXT_PUBLIC_QUERY_STALE_TIME:-60000}
+        - NEXT_PUBLIC_QUERY_RETRY=${NEXT_PUBLIC_QUERY_RETRY:-1}
+        - NEXT_PUBLIC_DEFAULT_USER_ID=${NEXT_PUBLIC_DEFAULT_USER_ID:-1}
+        - NEXT_PUBLIC_SNACKBAR_MAX_SNACK=${NEXT_PUBLIC_SNACKBAR_MAX_SNACK:-3}
+        - NEXT_PUBLIC_SNACKBAR_AUTO_HIDE_DURATION=${NEXT_PUBLIC_SNACKBAR_AUTO_HIDE_DURATION:-3000}
+    env_file:
+      - .env.local
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
