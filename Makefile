@@ -51,37 +51,37 @@ docker-build: ## Build Docker image
 	@echo "$(BLUE)Building Docker image...$(NC)"
 	docker build -t postforge .
 
-docker-up: ## Start Docker container using docker-compose (PORT=3001 to use different port)
+docker-up: ## Start Docker container using docker compose (PORT=3001 to use different port)
 	@echo "$(BLUE)Starting Docker containers on port $${PORT:-3000}...$(NC)"
-	@PORT=$${PORT:-3000} docker-compose up -d
+	@PORT=$${PORT:-3000} docker compose up -d
 
 docker-up-build: ## Build and start Docker containers (PORT=3001 to use different port)
 	@echo "$(BLUE)Building and starting Docker containers on port $${PORT:-3000}...$(NC)"
-	@PORT=$${PORT:-3000} docker-compose up -d --build
+	@PORT=$${PORT:-3000} docker compose up -d --build
 
 docker-down: ## Stop Docker containers
 	@echo "$(YELLOW)Stopping Docker containers...$(NC)"
-	docker-compose down
+	docker compose down
 
 docker-logs: ## View Docker container logs
 	@echo "$(BLUE)Viewing Docker logs...$(NC)"
-	docker-compose logs -f
+	docker compose logs -f
 
 docker-logs-tail: ## View last 100 lines of Docker logs
 	@echo "$(BLUE)Viewing last 100 lines of Docker logs...$(NC)"
-	docker-compose logs --tail=100
+	docker compose logs --tail=100
 
 docker-shell: ## Open shell in running Docker container
 	@echo "$(BLUE)Opening shell in Docker container...$(NC)"
-	docker-compose exec app sh
+	docker compose exec app sh
 
 docker-restart: ## Restart Docker containers
 	@echo "$(BLUE)Restarting Docker containers...$(NC)"
-	docker-compose restart
+	docker compose restart
 
 docker-clean: ## Stop containers and remove images/volumes for this project only
 	@echo "$(YELLOW)Cleaning Docker resources for this project...$(NC)"
-	docker-compose down -v --rmi local 2>/dev/null || true
+	docker compose down -v --rmi local 2>/dev/null || true
 	docker rmi postforge 2>/dev/null || true
 	@echo "$(GREEN)Project Docker resources cleaned!$(NC)"
 
@@ -130,7 +130,7 @@ check-env: ## Check if .env.local file exists
 
 status: ## Show status of Docker containers
 	@echo "$(BLUE)Docker Container Status:$(NC)"
-	@docker-compose ps || echo "No containers running"
+	@docker compose ps || echo "No containers running"
 
 info: ## Show project information
 	@echo "$(BLUE)PostForge Project Information$(NC)"
