@@ -51,8 +51,14 @@ export function useUpdatePost() {
     onSuccess: (updatedPost) => {
       // Update the specific post in cache
       queryClient.setQueryData(postKeys.detail(updatedPost.id), updatedPost);
-      // Invalidate posts list to refetch
-      queryClient.invalidateQueries({ queryKey: postKeys.lists() });
+      
+      // Update the post in the posts list cache directly
+      queryClient.setQueryData<Post[]>(postKeys.lists(), (oldPosts) => {
+        if (!oldPosts) return oldPosts;
+        return oldPosts.map((post) =>
+          post.id === updatedPost.id ? updatedPost : post
+        );
+      });
     },
   });
 }

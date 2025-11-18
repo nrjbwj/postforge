@@ -1,13 +1,32 @@
 'use client';
 
-import { Container, Typography, Box, Paper } from '@mui/material';
+import { useMemo } from 'react';
+import { Container, Typography, Box, Paper, CircularProgress } from '@mui/material';
 import { Description, People, TrendingUp } from '@mui/icons-material';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { Footer } from '@/components/layout/Footer';
+import { usePosts } from '@/hooks/usePosts';
 
 export default function Dashboard() {
+  const { data: posts = [], isLoading, error } = usePosts();
+
+  // Calculate metrics from API data
+  const metrics = useMemo(() => {
+    const totalPosts = posts.length;
+    const uniqueUsers = new Set(posts.map((post) => post.userId)).size;
+    
+    // Calculate average posts per user for engagement metric
+    const avgPostsPerUser = uniqueUsers > 0 ? (totalPosts / uniqueUsers).toFixed(1) : '0';
+    
+    return {
+      totalPosts,
+      uniqueUsers,
+      avgPostsPerUser,
+    };
+  }, [posts]);
+
   return (
     <Box
       sx={{
@@ -27,36 +46,48 @@ export default function Dashboard() {
         </Box>
 
         {/* Metrics Cards */}
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(3, 1fr)',
-            },
-            gap: 3,
-            mb: 4,
-          }}
-        >
-          <MetricCard
-            title="Total Posts"
-            value="100"
-            subtitle="From API"
-            icon={<Description sx={{ fontSize: 40 }} />}
-          />
-          <MetricCard
-            title="Active Users"
-            value="10"
-            subtitle="Contributing authors"
-            icon={<People sx={{ fontSize: 40 }} />}
-          />
-          <MetricCard
-            title="Engagement"
-            value="+12.5%"
-            subtitle="vs last month"
-            icon={<TrendingUp sx={{ fontSize: 40 }} />}
-          />
-        </Box>
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8, mb: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Box sx={{ py: 4, mb: 4 }}>
+            <Typography variant="body1" color="error">
+              Failed to load metrics. Please try again later.
+            </Typography>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(3, 1fr)',
+              },
+              gap: 3,
+              mb: 4,
+            }}
+          >
+            <MetricCard
+              title="Total Posts"
+              value={metrics.totalPosts}
+              subtitle="From API"
+              icon={<Description sx={{ fontSize: 40 }} />}
+            />
+            <MetricCard
+              title="Active Users"
+              value={metrics.uniqueUsers}
+              subtitle="Contributing authors"
+              icon={<People sx={{ fontSize: 40 }} />}
+            />
+            <MetricCard
+              title="Avg Posts/User"
+              value={metrics.avgPostsPerUser}
+              subtitle="Average per user"
+              icon={<TrendingUp sx={{ fontSize: 40 }} />}
+            />
+          </Box>
+        )}
 
         {/* Quick Actions and Recent Activity */}
         <Box
@@ -73,7 +104,7 @@ export default function Dashboard() {
             <QuickActions />
           </Paper>
           <Paper sx={{ p: 3 }}>
-            <RecentActivity />
+            <RecentActivity posts={posts} isLoading={isLoading} />
           </Paper>
         </Box>
       </Container>
