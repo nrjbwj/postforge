@@ -5,7 +5,8 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { BackButton } from '@/components/common/BackButton';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { usePost } from '@/hooks/usePosts';
+import { CommentsList } from '@/components/posts/CommentsList';
+import { usePost, useComments } from '@/hooks/usePosts';
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { useParams } from 'next/navigation';
@@ -17,6 +18,7 @@ export default function PostDetailsPage() {
     return id ? parseInt(id, 10) : 0;
   }, [params?.id]);
   const { data: post, isLoading, error } = usePost(postId);
+  const { data: comments = [], isLoading: commentsLoading, error: commentsError } = useComments(postId);
 
   if (isLoading) {
     return (
@@ -70,6 +72,15 @@ export default function PostDetailsPage() {
             </Box>
           </CardContent>
         </Card>
+
+        {/* Comments Section */}
+        <Box sx={{ mt: 4 }}>
+          <CommentsList
+            comments={comments}
+            isLoading={commentsLoading}
+            error={commentsError}
+          />
+        </Box>
     </PageLayout>
   );
 }

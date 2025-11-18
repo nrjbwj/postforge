@@ -1,26 +1,7 @@
 import { env } from '@/config/env';
+import type { Post, CreatePostData, UpdatePostData, Comment } from '@/types/post';
 
 const API_BASE_URL = env.apiBaseUrl;
-
-export interface Post {
-  id: number;
-  title: string;
-  body: string;
-  userId: number;
-}
-
-export interface CreatePostData {
-  title: string;
-  body: string;
-  userId: number;
-}
-
-export interface UpdatePostData {
-  id: number;
-  title: string;
-  body: string;
-  userId: number;
-}
 
 // Fetch all posts
 export const fetchPosts = async (): Promise<Post[]> => {
@@ -83,5 +64,14 @@ export const deletePost = async (id: number): Promise<void> => {
   if (!response.ok) {
     throw new Error('Failed to delete post');
   }
+};
+
+// Fetch comments for a post
+export const fetchComments = async (postId: number): Promise<Comment[]> => {
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch comments');
+  }
+  return response.json();
 };
 

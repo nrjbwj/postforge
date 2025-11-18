@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchPosts, fetchPost, createPost, updatePost, deletePost, type Post, type CreatePostData, type UpdatePostData } from '@/lib/api/posts';
+import { fetchPosts, fetchPost, createPost, updatePost, deletePost, fetchComments } from '@/lib/api/posts';
+import type { Post, CreatePostData, UpdatePostData } from '@/types/post';
 import { useActivity } from '@/contexts/ActivityContext';
 
 // Query keys
@@ -9,6 +10,7 @@ export const postKeys = {
   list: (filters: string) => [...postKeys.lists(), { filters }] as const,
   details: () => [...postKeys.all, 'detail'] as const,
   detail: (id: number) => [...postKeys.details(), id] as const,
+  comments: (postId: number) => [...postKeys.all, 'comments', postId] as const,
 };
 
 // Fetch all posts
@@ -110,6 +112,15 @@ export function useDeletePost() {
         });
       }
     },
+  });
+}
+
+// Fetch comments for a post
+export function useComments(postId: number) {
+  return useQuery({
+    queryKey: postKeys.comments(postId),
+    queryFn: () => fetchComments(postId),
+    enabled: !!postId,
   });
 }
 
